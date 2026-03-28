@@ -1,8 +1,10 @@
 # NBA Alpha Gen
 
+[![CI](https://github.com/wwihono/nba-alpha-gen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/wwihono/nba-alpha-gen/actions/workflows/ci.yml)
+
 **NBA Alpha Gen** is a research-oriented **sports betting edge dashboard** for the NBA. It is designed to combine **schedule and player data**, **injury intelligence**, **multi-book player-prop line tracking** (“line scalping”), **machine-learning signals**, **risk tiers**, **daily picks / locks**, **favorite players**, **automatic blacklisting** after consecutive prop misses, and **game-level context** (home court, head-to-head, defensive matchup notes, momentum, optional Monte Carlo simulation). The product is **decision-support only**—not financial advice and not a betting execution service.
 
-This repository is **under active development**. The **FastAPI backend** below is the first runnable slice; the full UI, odds feeds, and models follow the phased roadmap in the project spec.
+This repository is **under active development**. It includes a **FastAPI** backend and a **Vite + React** dashboard under `frontend/` (navy-forward **light/dark** UI, spec-aligned sections). Live odds ingestion and ML layers follow the phased roadmap.
 
 ---
 
@@ -15,7 +17,7 @@ This repository is **under active development**. The **FastAPI backend** below i
 | **Risk & picks** | Label risk per line; rank daily picks and “lock” tiers with auditable metadata. |
 | **Personalization** | Favorite players; auto-hide recommendations for players who miss tracked props **3+ games in a row** (with overrides in settings). |
 | **Game view** | Home court, H2H, schemes/matchup context, streaks, optional **100-game** simulation for suggested margin/spread vs. market. |
-| **UI** | Navy-forward brand with **light** and **dark** themes (frontend to be wired to this API). |
+| **UI** | Navy-forward brand with **light** and **dark** themes (`frontend/`, calls the API via `VITE_API_URL`). |
 
 ---
 
@@ -25,7 +27,8 @@ This repository is **under active development**. The **FastAPI backend** below i
 - **pip** (or another PEP 517 installer)
 - **Git** (to clone the repository)
 
-Optional later: Node.js for the web dashboard, PostgreSQL for persistence, API keys for odds and stats providers.
+- **Node.js 20+** and **npm** — for the `frontend/` dashboard (`npm install`, `npm run dev`).  
+Optional later: PostgreSQL for persistence, API keys for odds and stats providers.
 
 ---
 
@@ -77,7 +80,7 @@ Optional variables use the prefix **`NBA_`**. You can place them in a **`.env`**
 |----------|---------|---------|
 | `NBA_APP_NAME` | `NBA Alpha Gen` | Display name in API metadata. |
 | `NBA_DEBUG` | `false` | Reserved for verbose logging / dev behavior. |
-| `NBA_CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Comma-separated origins allowed for browser calls to the API. |
+| `NBA_CORS_ORIGINS` | includes `localhost:3000`, `127.0.0.1:3000`, **`5173`** (Vite) | Comma-separated origins allowed for browser calls to the API. |
 
 Example **`.env`** (create manually):
 
@@ -103,6 +106,28 @@ uvicorn nba_alpha_gen.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 You should see Uvicorn listening on `http://127.0.0.1:8000`.
+
+---
+
+## Web dashboard (frontend)
+
+From the repo root:
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Open **http://localhost:5173**. The UI expects the API at **`VITE_API_URL`** (default `http://127.0.0.1:8000` in `.env`). Run **Uvicorn** in a separate terminal so the status bar can reach `/health` and `/api/v1/info`.
+
+- **Dashboard** — Slate, game analysis, injuries, prop board, picks, reports, data health (mock or placeholder until backends exist).  
+- **Favorites** — Local list of players (browser-only for now).  
+- **Settings** — Theme note, blacklist placeholder, API env hint.  
+- **Theme** — Toggle in the header (**Light** / **Dark**); preference is stored in `localStorage`.
+
+Production build: `npm run build` (output in `frontend/dist/`).
 
 ---
 
@@ -157,10 +182,13 @@ nba-alpha-gen/
 ├── src/nba_alpha_gen/
 │   ├── main.py               # FastAPI app
 │   └── config.py             # Settings (env-backed)
+├── tests/                    # pytest (see Development)
+├── frontend/                 # Vite + React dashboard
+├── .github/workflows/ci.yml  # GitHub Actions: pytest + frontend build
 └── .gitignore
 ```
 
-Additional folders (`data/`, `models/`, `frontend/`, `docs/`) will appear as ingestion, ML, and UI work land.
+Additional folders (`data/`, `models/`, `docs/`) may appear as ingestion and ML work land.
 
 ---
 
@@ -172,11 +200,21 @@ Additional folders (`data/`, `models/`, `frontend/`, `docs/`) will appear as ing
 ruff check src
 ```
 
-### Run tests (when added)
+### Run tests
+
+Install dev dependencies: `pip install -e ".[dev]"`.
 
 ```bash
-pytest
+pytest -v
 ```
+
+Tests live under `tests/` and cover `GET /health`, `GET /api/v1/info`, OpenAPI, `/docs`, error codes, and CORS (see `tests/test_api.py`).
+
+### Continuous integration
+
+On every **push** and **pull request** to `main` (or `master`), [GitHub Actions](.github/workflows/ci.yml) runs **`pytest`** on **Python 3.11 and 3.12** and **`npm ci` + `npm run build`** in `frontend/` (Node 20). You can also run the workflow manually from the Actions tab (**workflow_dispatch**).
+
+If the badge above shows “failing” or the link 404s, update the repo path in the badge URL to match your GitHub remote.
 
 ---
 

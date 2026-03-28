@@ -6,7 +6,10 @@ class Settings(BaseSettings):
 
     app_name: str = "NBA Alpha Gen"
     debug: bool = False
-    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    cors_origins: str = (
+        "http://localhost:3000,http://127.0.0.1:3000,"
+        "http://localhost:5173,http://127.0.0.1:5173"
+    )
 
 
 def get_settings() -> Settings:

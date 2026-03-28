@@ -35,7 +35,8 @@ models/artifacts/
 *.log
 logs/
 
-# Frontend (when added)
+# Frontend
 node_modules/
+frontend/dist/
 .next/
 out/
