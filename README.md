@@ -28,7 +28,8 @@ This repository is **under active development**. It includes a **FastAPI** backe
 - **Git** (to clone the repository)
 
 - **Node.js 20+** and **npm** — for the `frontend/` dashboard (`npm install`, `npm run dev`).  
-Optional later: PostgreSQL for persistence, API keys for odds and stats providers.
+- **The Odds API** — optional; set `NBA_ODDS_API_KEY` for live NBA lines via this backend (see [the-odds-api.com](https://the-odds-api.com/)). Rotate any key that was shared or committed by mistake.  
+Optional later: PostgreSQL for persistence, additional stats providers.
 
 ---
 
@@ -74,19 +75,25 @@ pip install -e ".[dev]"
 
 ## Configuration (environment variables)
 
-Optional variables use the prefix **`NBA_`**. You can place them in a **`.env`** file in the project root (do not commit secrets).
+Optional variables use the prefix **`NBA_`**. You can place them in a **`.env`** file in the project root (do not commit secrets). Copy **[`.env.example`](.env.example)** to `.env` and fill in values.
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `NBA_APP_NAME` | `NBA Alpha Gen` | Display name in API metadata. |
 | `NBA_DEBUG` | `false` | Reserved for verbose logging / dev behavior. |
 | `NBA_CORS_ORIGINS` | includes `localhost:3000`, `127.0.0.1:3000`, **`5173`** (Vite) | Comma-separated origins allowed for browser calls to the API. |
+| `NBA_ODDS_API_KEY` | (empty) | **The Odds API** key; required for `/api/v1/odds/*` routes. |
+| `NBA_ODDS_API_BASE_URL` | `https://api.the-odds-api.com/v4` | Odds API v4 base URL. |
+| `NBA_ODDS_DEFAULT_REGIONS` | `us` | Default `regions` query for Odds API (e.g. `us`, `us2`). |
+| `NBA_ODDS_DEFAULT_MARKETS` | `h2h,spreads,totals` | Default markets for the NBA slate endpoint. |
+| `NBA_ODDS_DEFAULT_EVENT_MARKETS` | `player_points,...` | Default markets for per-event odds (player props). |
 
 Example **`.env`** (create manually):
 
 ```env
 NBA_DEBUG=false
 NBA_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:5173
+NBA_ODDS_API_KEY=your_key_here
 ```
 
 ---
@@ -146,15 +153,25 @@ Open a browser:
 |--------|------|-------------|
 | `GET` | `/health` | Liveness check; returns `{"status":"ok"}`. |
 | `GET` | `/api/v1/info` | API name, version, and link to docs. |
+| `GET` | `/api/v1/odds/nba` | NBA upcoming games + book lines (proxies [The Odds API](https://the-odds-api.com/)). Requires `NBA_ODDS_API_KEY`. Query: `regions`, `markets`, `oddsFormat`. |
+| `GET` | `/api/v1/odds/nba/events/{event_id}` | Single-event odds (e.g. player props). Same query params; defaults include `player_points`, `player_rebounds`, etc. |
 
 Example with **curl**:
 
 ```bash
 curl http://127.0.0.1:8000/health
 curl http://127.0.0.1:8000/api/v1/info
+
+# After setting NBA_ODDS_API_KEY — slate (moneyline, spread, total):
+curl "http://127.0.0.1:8000/api/v1/odds/nba?regions=us&markets=h2h,spreads,totals"
+
+# Replace EVENT_ID with an `id` from the slate response — player props:
+curl "http://127.0.0.1:8000/api/v1/odds/nba/events/EVENT_ID?regions=us&markets=player_points,player_rebounds"
 ```
 
-When the **web UI** is added, point it at this API base URL (same host/port or proxied). Keep `NBA_CORS_ORIGINS` aligned with the UI dev server origin.
+Responses may include `x-requests-remaining` / `x-requests-used` headers from The Odds API for quota monitoring.
+
+The **frontend** uses `VITE_API_URL` for API calls. Keep **`NBA_CORS_ORIGINS`** aligned with the Vite dev origin (`http://localhost:5173` is included in the backend default list).
 
 ---
 
@@ -181,7 +198,9 @@ nba-alpha-gen/
 ├── pyproject.toml            # Python package and dependencies
 ├── src/nba_alpha_gen/
 │   ├── main.py               # FastAPI app
-│   └── config.py             # Settings (env-backed)
+│   ├── config.py             # Settings (env-backed)
+│   └── routers/odds.py       # Odds API proxy routes
+├── src/nba_api/              # The Odds API client (NBA)
 ├── tests/                    # pytest (see Development)
 ├── frontend/                 # Vite + React dashboard
 ├── .github/workflows/ci.yml  # GitHub Actions: pytest + frontend build
@@ -205,10 +224,14 @@ ruff check src
 Install dev dependencies: `pip install -e ".[dev]"`.
 
 ```bash
-pytest -v
+# Default: mocked tests only — zero Odds API credits
+pytest -v -m "not integration"
+
+# Optional: one live call to The Odds API (uses credits). Requires NBA_ODDS_API_KEY.
+pytest -v -m integration
 ```
 
-Tests live under `tests/` and cover `GET /health`, `GET /api/v1/info`, OpenAPI, `/docs`, error codes, and CORS (see `tests/test_api.py`).
+Tests live under `tests/` — `test_api.py` (core routes, OpenAPI, CORS) and `test_odds_client.py` (mocked Odds API client and proxy routes). Continuous integration runs **`-m "not integration"`** so no API keys or credits are required in GitHub Actions.
 
 ### Continuous integration
 

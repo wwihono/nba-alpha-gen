@@ -1,6 +1,5 @@
 """API contract and behavior tests for the FastAPI backend."""
 
-import pytest
 from fastapi.testclient import TestClient
 
 

@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from nba_alpha_gen.config import get_settings
+from nba_alpha_gen.routers.odds import router as odds_router
 
 
 @asynccontextmanager
@@ -42,6 +43,8 @@ def create_app() -> FastAPI:
             "version": "0.1.0",
             "docs": "/docs",
         }
+
+    app.include_router(odds_router)
 
     return app
 
