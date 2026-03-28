@@ -13,12 +13,18 @@ const mockProps = [
 export function DashboardPage() {
   return (
     <div className="dashboard">
-      <p className="dashboard__intro">
-        Research-only dashboard: schedules, props, risk, picks, favorites, and game context. Odds and
-        models are wired up next; sections below match the product spec.
-      </p>
+      <section className="hero" aria-labelledby="hero-title">
+        <p className="hero__eyebrow">Live odds · Props · Risk</p>
+        <h1 id="hero-title" className="hero__title">
+          NBA edge dashboard
+        </h1>
+        <p className="hero__lead">
+          Research-grade view of schedules, lines, and context—built with the same clarity as modern fintech
+          surfaces. Connect data feeds and models to activate picks, simulations, and exports.
+        </p>
+      </section>
 
-      <div className="dashboard__jump">
+      <nav className="dashboard__jump" aria-label="Section shortcuts">
         <span className="dashboard__jump-label">Jump to</span>
         <a href="#slate">Slate</a>
         <a href="#game-detail">Game analysis</a>
@@ -26,7 +32,7 @@ export function DashboardPage() {
         <a href="#props">Prop lines</a>
         <a href="#picks">Picks</a>
         <a href="#data-health">Data health</a>
-      </div>
+      </nav>
 
       <SectionCard
         id="slate"

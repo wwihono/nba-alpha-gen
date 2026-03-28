@@ -23,11 +23,14 @@ export function FavoritesPage() {
 
   return (
     <div className="page page--narrow">
-      <h1 className="page__title">Favorite players</h1>
-      <p className="page__lead">
+      <header className="page-hero">
+        <p className="page-hero__eyebrow">Watchlist</p>
+        <h1 className="page-hero__title">Favorite players</h1>
+        <p className="page-hero__lead">
         Track players for quick access and (later) favorites-first sorting on the line board. This list is
         stored in the browser for now; accounts will sync across devices.
-      </p>
+        </p>
+      </header>
 
       <div className="field">
         <label htmlFor="fav-search">Add player</label>

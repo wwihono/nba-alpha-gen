@@ -1,11 +1,13 @@
 export function SettingsPage() {
   return (
     <div className="page page--narrow">
-      <h1 className="page__title">Settings</h1>
-      <p className="page__lead">
-        Theme uses the toggle in the header (light / dark). Per spec, both modes keep a navy-forward brand
-        accent.
-      </p>
+      <header className="page-hero">
+        <p className="page-hero__eyebrow">Preferences</p>
+        <h1 className="page-hero__title">Settings</h1>
+        <p className="page-hero__lead">
+          Theme uses the toggle in the header (light / dark). Both modes keep a navy-forward brand accent.
+        </p>
+      </header>
 
       <section className="settings-block">
         <h2 className="page__h2">Auto-blacklist</h2>
